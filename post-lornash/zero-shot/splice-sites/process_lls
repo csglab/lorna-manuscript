@@ -1,0 +1,131 @@
+setwd('/scratch/asabe/projects/foundation-model/downstream/splice-site-mutations')
+
+library(data.table)
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggExtra)
+library(gridExtra)
+library(RColorBrewer)
+
+ss_lls <- fread('data/se_ss_dataset.likelihoods.csv')
+ss_lls <- ss_lls %>% 
+  separate(seq_id, c('transcript_id', 'event_id', 'type', 'ss_type', 'rel_pos'), sep = '@') %>% 
+  as.data.table()
+
+ref_trs <- fread('data/downstream_trs_dataset.likelihoods.csv')
+ref_trs <- ref_trs[, .(transcript_id, likelihood, tts_logprobs)]
+setnames(ref_trs, c('likelihood', 'tts_logprobs'), c('ref_likelihood', 'ref_tts_logprobs'))
+
+ss_lls <- merge(ss_lls, ref_trs, by = 'transcript_id')
+# ss_lls[, dll := ref_likelihood - likelihood]
+ss_lls[, dll := likelihood - ref_likelihood]
+ss_lls[, summary(dll)]
+ss_lls[, dtts := ref_tts_logprobs - tts_logprobs]
+
+p_value_overall <- wilcox.test(dll ~ type, data = ss_lls)$p.value
+if(p_value_overall == 0)
+  p_value_overall = .Machine$double.xmin
+
+inc = ss_lls[type == 'inclusion', .(event_id, ss_type, dll)]
+exc = ss_lls[type == 'exclusion', .(event_id, ss_type, dll)]
+ss_dlls <- merge(inc, exc, by = c('event_id', 'ss_type'), suffixes = c('_inc', '_exc'))
+ss_lls_ = melt(ss_dlls, id.vars = 'event_id')
+
+p <- ggplot(ss_dlls) + 
+  aes(x = dll_inc, y = dll_exc, color = ss_type) +
+  geom_point(alpha = 0.5) + 
+  labs(x = 'dll_inclusion_trs', y = 'dll_exclusion_trs', title = 'DLL: Inclusion vs. Exclusion') +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = 'bottom')
+ggMarginal(p, type = 'histogram')
+
+# dt <- ss_dlls[ss_type == 'acceptor']
+# range_all <- range(c(dt$dll_inc, dt$dll_exc))
+# p <- ggplot(dt, aes(x = dll_exc, y = dll_inc)) +
+#   geom_point(aes(color = ifelse(dll_inc < dll_exc, "below", "above")), size = 2, alpha = 0.5) +
+#   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+#   scale_color_manual(values = c("below" = "black", "above" = "gray")) +
+#   labs(x = "DeltaLogLikelihood (Exclude)", y = "DeltaLogLikelihood (Include)") +
+#   coord_equal() + 
+#   lims(x = range_all, y = range_all) + 
+#   theme_minimal() +
+#   theme(legend.position = "none")
+# p_1 <- ggMarginal(p, type = 'histogram')
+
+# dt <- ss_dlls[ss_type == 'donor']
+# range_all <- range(c(dt$dll_inc, dt$dll_exc))
+# p <- ggplot(dt, aes(x = dll_exc, y = dll_inc)) +
+#   geom_point(aes(color = ifelse(dll_inc < dll_exc, "below", "above")), size = 2, alpha = 0.5) +
+#   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+#   scale_color_manual(values = c("below" = "black", "above" = "gray")) +
+#   labs(x = "DeltaLogLikelihood (Exclude)", y = "DeltaLogLikelihood (Include)") +
+#   coord_equal() + 
+#   lims(x = range_all, y = range_all) + 
+#   theme_minimal() +
+#   theme(legend.position = "none")
+# p_2 <- ggMarginal(p, type = 'histogram')
+
+# grid.arrange(p_1, p_2, ncol = 2)
+
+# p_value_donor <- wilcox.test(dll ~ type, data = ss_lls[ss_type == 'donor'])$p.value
+# p_value_acceptor <- wilcox.test(dll ~ type, data = ss_lls[ss_type == 'acceptor'])$p.value
+
+acceptor_dt <- ss_dlls[ss_type == 'acceptor']
+acceptor_dens <- acceptor_dt[, densCols(dll_exclusion, dll_inclusion, colramp = colorRampPalette(c("black", "white")))]
+acceptor_dt[, dens := col2rgb(acceptor_dens) %>% extract(1, ) %>% add(1) %>% as.integer()]
+
+cols <- colorRampPalette(c("#000099", "#00FEFF", "#45FE4F", 
+                           "#FCFF00", "#FF9400", "#FF3100"))(256)
+
+acceptor_dt[, col := cols[dens]]
+range_all <- acceptor_dt[, range(dll_exclusion, dll_inclusion)]
+
+acceptor_plot <- ggplot(acceptor_dt) +
+  aes(x = dll_exclusion, y = dll_inclusion) +
+  geom_point(aes(color = col), size = 2, alpha = 0.5, stroke = 0.1) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "solid", size = 0.25, color = "black") +
+  geom_vline(xintercept = 0, linetype = "solid", size = 0.25, color = "black") +
+  labs(x = NULL, y = NULL) +
+  coord_equal() +
+  lims(x = range_all, y = range_all) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_color_identity()
+
+acceptor_plot <- ggMarginal(acceptor_plot, type = 'histogram', margins = 'both', fill = "gray")
+
+dt_donor <- ss_dlls[ss_type == 'donor']
+dens_donor <- densCols(dt_donor$dll_exc_r, dt_donor$dll_inc, colramp = colorRampPalette(c("black", "white")))
+dt_donor$dens <- col2rgb(dens_donor)[1,] + 1L
+dt_donor$col <- cols[dt_donor$dens]
+range_all <- range(c(dt_donor$dll_inc, dt_donor$dll_exc_r))
+
+p2 <- ggplot(dt_donor, aes(x = dll_exc_r, y = dll_inc)) +
+  geom_point(aes(color = col), size = 2, alpha = 0.5, stroke=0.1) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "solid", size = 0.25, color = "black") +
+  geom_vline(xintercept = 0, linetype = "solid", size = 0.25, color = "black") +
+  labs(x = NULL, y = NULL) +
+  coord_equal() +
+  lims(x = range_all, y = range_all) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_color_identity()
+
+p_2 <- ggMarginal(p2, type = 'histogram', margins = 'both', fill = "gray")
+
+grid.arrange(p_1, p_2, ncol = 2)
+
+p_value_donor <- wilcox.test(dll ~ type, data = ss_lls[ss_type == 'donor'])$p.value
+p_value_acceptor <- wilcox.test(dll ~ type, data = ss_lls[ss_type == 'acceptor'])$p.value
+
+p <- ggplot(ss_lls, aes(x = type, y = dll, fill = type)) +
+  geom_boxplot(outlier.shape = NA) +
+  coord_flip() +
+  facet_wrap(~ ss_type, ncol = 1) +
+  labs(x = 'Type', y = 'DLL', title = 'DLL: Inclusion vs. Exclusion by Donor/Acceptor') +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = 'none') 

@@ -1,0 +1,21 @@
+name: rmats_env
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - rmats=4.3.0
+  - blast=2.10.1
+  - espresso=1.4.0
+  - rmats-long=1.0.0
+  - rmats2sashimiplot=3.0.0
+
+### Install rMATS-long
+# pushd .
+# env_dir='/scratch/asabe/envs/rmats_env2'
+# cd ${env_dir}/rMATS-long
+# echo '#!/usr/bin/env python' | cat - rmats_long.py > temp && mv temp rmats_long.py
+# chmod u+x rmats_long.py
+# cd ../bin
+# ln -s ../rMATS-long/*.{py,R} .
+# popd
