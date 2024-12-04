@@ -1,18 +1,25 @@
+#!/usr/bin/env Rscript
+
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/sort_gtf.R \
+#   --gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/extended_annotations.gtf \
+#   --output_gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
+#   --assembly_report_file /scratch/asabe/projects/pacbio/data/references/genome/GRCh38_latest_assembly_report.txt \
+
 library(optparse)
 library(data.table)
 library(stringr)
 library(magrittr)
 
 option_list <- list(
-  make_option(c("-g", "--gtf_file"), type = "character", help = "Path to input GTF file", metavar = "file"),
-  make_option(c("-o", "--output_gtf_file"), type = "character", help = "Path to output sorted GTF file", metavar = "file"),
-  make_option(c("-a", "--assembly_report_file"), type = "character", help = "Path to assembly report file", metavar = "file")
+  make_option("--gtf_file", type = "character", help = "Path to input GTF file", metavar = "file"),
+  make_option("--output_gtf_file", type = "character", help = "Path to output sorted GTF file", metavar = "file"),
+  make_option("--assembly_report_file", type = "character", help = "Path to assembly report file", metavar = "file")
 )
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-setwd('/scratch/asabe/projects/lornash')
+# setwd('/scratch/asabe/projects/lornash')
 
 gtf_file <- opt$gtf_file
 output_gtf_file <- opt$output_gtf_file
@@ -20,7 +27,7 @@ assembly_report_file <- opt$assembly_report_file
 
 gtf_cols <- c('seqnames', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute')
 gtf <- fread(gtf_file,
-             col.names <- gtf_cols)
+             col.names = gtf_cols)
 
 assembly_info <- fread(assembly_report_file,
                       skip = '# Sequence-Name',
