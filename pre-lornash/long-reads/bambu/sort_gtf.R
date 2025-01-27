@@ -10,6 +10,11 @@
 #   --output_gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/mouse.databank.gencode_vM36.GRCm39/mouse.databank.gencode_vM36.GRCm39.extended_annotations.sorted.gtf \
 #   --assembly_report_file /scratch/asabe/projects/pacbio/data/references/genome/GCF_000001635.27_GRCm39_assembly_report.txt \
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/sort_gtf.R \
+#   --gtf_file /scratch/asabe/projects/mpaqt/rebuttal/data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/extended_annotations.gtf \
+#   --output_gtf_file /scratch/asabe/projects/mpaqt/rebuttal/data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/neurondiff_isoseq.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
+#   --assembly_report_file /scratch/asabe/projects/pacbio/data/references/genome/GRCh38_latest_assembly_report.txt
+
 library(optparse)
 library(data.table)
 library(stringr)
@@ -93,6 +98,7 @@ gtf[, feature := factor(feature, levels = feature_order, ordered = T)]
 
 setorder(gtf, gene_id, transcript_id, feature)
 
+gtf[, seqnames := chr] ## replacing GENCODE names to standard UCSC 'chr' names
 gtf <- gtf[, gtf_cols, with = F]
 
 fwrite(gtf, sep = '\t', quote = F, col.names = F, row.names = F, file = output_gtf_file)

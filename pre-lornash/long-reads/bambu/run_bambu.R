@@ -12,17 +12,69 @@
 #   --do_postprocess FALSE \
 #   --num_threads 64
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/run_bambu.R \
+#   --species human \
+#   --mode quant \
+#   --do_postprocess FALSE \
+#   --num_threads 64 \
+#   --data_dir /scratch/asabe/projects/pacbio/data/databank/human/bam \
+#   --bam_pattern 'neurondiff_isoseq.*.flnc.sorted.bam$' \
+#   --prefix neurondiff_isoseq.gencode_v47.GRCh38_p14
+
 library(optparse)
 library(data.table)
 library(stringr)
 library(magrittr)
 library(bambu)
 
+
 option_list <- list(
-  make_option(c("--species"), type = "character", default = "human", help = "Species: either 'human' or 'mouse' [default= %default]", metavar = "character"),
-  make_option(c("--mode"), type = "character", help = "Mode: either 'discovery' or 'quant'", metavar = "character"),
-  make_option(c("--do_postprocess"), type = "logical", default = FALSE, help = "Perform post-processing [default= %default]", metavar = "logical"),
-  make_option(c("--num_threads"), type = "integer", default = 32, help = "Number of threads to use [default= %default]", metavar = "integer")
+  make_option(
+    c("--species"),
+    type = "character",
+    default = "human",
+    help = "Species: either 'human' or 'mouse' [default= %default]",
+    metavar = "character"
+  ),
+  make_option(
+    c("--mode"),
+    type = "character",
+    help = "Mode: either 'discovery' or 'quant'",
+    metavar = "character"
+  ),
+  make_option(
+    c("--do_postprocess"),
+    type = "logical",
+    default = FALSE,
+    help = "Perform post-processing [default= %default]",
+    metavar = "logical"
+  ),
+  make_option(
+    c("--num_threads"),
+    type = "integer",
+    default = 32,
+    help = "Number of threads to use [default= %default]",
+    metavar = "integer"
+  ),
+  make_option(
+    c("--data_dir"),
+    type = "character",
+    help = "Directory containing BAM files",
+    metavar = "character"
+  ),
+  make_option(
+    c("--bam_pattern"),
+    type = "character",
+    default = "*.flnc.sorted.bam$",
+    help = "Pattern to match BAM files [default= %default]",
+    metavar = "character"
+  ),
+  make_option(
+    c("--prefix"),
+    type = "character",
+    help = "Prefix for output files",
+    metavar = "character"
+  )
 )
 
 opt_parser <- OptionParser(option_list = option_list)
@@ -32,32 +84,25 @@ species <- opt$species
 mode <- opt$mode
 do_postprocess <- opt$do_postprocess
 num_threads <- opt$num_threads
+data_dir <- opt$data_dir
+bam_pattern <- opt$bam_pattern
+prefix <- opt$prefix
 
 # setwd('/scratch/asabe/projects/lornash')
-
-bambu_dir <- 'data/transcriptome'
-
 setDTthreads(num_threads)
+bambu_dir <- 'data/transcriptome'
+reads_bam <- list.files(data_dir, bam_pattern, recursive = TRUE, full.names = TRUE)
 
 if (species == 'human') {
   
   annotation_gtf <- 'data/references/gencode.v47.annotation.gtf'
   genome_fasta <- 'data/references/GRCh38.p14.genome.fa'
 
-  data_dir <- '/scratch/asabe/projects/pacbio/data/revio'
-  reads_bam <- list.files(data_dir, '*.flnc.sorted.bam$', recursive = TRUE, full.names = TRUE)
-
-  prefix <- 'human.c2l2.revio.gencode_v47.GRCh38_p14'
-
 } else if (species == 'mouse') {
 
   annotation_gtf <- 'data/references/gencode.vM36.annotation.gtf'
   genome_fasta <- 'data/references/GRCm39.genome.fa'
-  
-  data_dir <- '/scratch/asabe/projects/pacbio/data/databank/mouse'
-  reads_bam <- list.files(data_dir, '*.flnc.sorted.bam$', recursive = TRUE, full.names = TRUE)
-  
-  prefix <- 'mouse.databank.gencode_vM36.GRCm39'
+
 }
 
 annotation_bambu <- prepareAnnotations(annotation_gtf)

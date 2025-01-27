@@ -4,6 +4,10 @@
 #   --gtf_file data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
 #   --fasta_file data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.transcripts.fasta
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/extract_transcripts_fasta.R \
+#   --gtf_file /scratch/asabe/projects/mpaqt/rebuttal/data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/neurondiff_isoseq.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
+#   --fasta_file /scratch/asabe/projects/mpaqt/rebuttal/data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/neurondiff_isoseq.gencode_v47.GRCh38_p14.extended_annotations.transcripts.fasta
+
 library(optparse)
 library(data.table)
 library(stringr)
@@ -27,11 +31,6 @@ fasta_file <- opt$fasta_file
 
 ref_genome <- BSgenome.Hsapiens.UCSC.hg38
 
-# setwd('/scratch/asabe/projects/amir')
-# gtf_file <- 'data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf'
-# ref_gtf_file <- 'data/references/gencode.v47.annotation.gtf'
-# fasta_file <- 'data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.transcripts.fasta'
-
 gtf <- import(gtf_file)
 gtf <- as.data.table(gtf)
 
@@ -42,6 +41,9 @@ gtf <- gtf[type %in% c('transcript', 'exon')]
 gtf[, exon_number := as.integer(exon_number)]
 gtf[, num_exons := max(exon_number, na.rm = T), transcript_id]
 gtf[strand == '-', exon_number := (num_exons - exon_number + 1)]
+
+# gtf[, .N, seqnames]
+# names(ref_genome)
 
 gtf[type != 'transcript', seq_ := getSeq(ref_genome,
                                          names = seqnames,
