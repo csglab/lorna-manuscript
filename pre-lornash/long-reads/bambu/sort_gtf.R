@@ -5,6 +5,11 @@
 #   --output_gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
 #   --assembly_report_file /scratch/asabe/projects/pacbio/data/references/genome/GRCh38_latest_assembly_report.txt \
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/sort_gtf.R \
+#   --gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/mouse.databank.gencode_vM36.GRCm39/extended_annotations.gtf \
+#   --output_gtf_file /home/asabe/scratch/projects/amir/data/transcriptome/mouse.databank.gencode_vM36.GRCm39/mouse.databank.gencode_vM36.GRCm39.extended_annotations.sorted.gtf \
+#   --assembly_report_file /scratch/asabe/projects/pacbio/data/references/genome/GCF_000001635.27_GRCm39_assembly_report.txt \
+
 library(optparse)
 library(data.table)
 library(stringr)

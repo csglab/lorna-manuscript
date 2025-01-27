@@ -6,6 +6,12 @@
 #   --do_postprocess TRUE \
 #   --num_threads 248
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/run_bambu.R \
+#   --species mouse \
+#   --mode quant \
+#   --do_postprocess FALSE \
+#   --num_threads 64
+
 library(optparse)
 library(data.table)
 library(stringr)
@@ -29,21 +35,29 @@ num_threads <- opt$num_threads
 
 # setwd('/scratch/asabe/projects/lornash')
 
-data_dir <- '/scratch/asabe/projects/pacbio/data/revio'
 bambu_dir <- 'data/transcriptome'
 
 setDTthreads(num_threads)
 
 if (species == 'human') {
+  
   annotation_gtf <- 'data/references/gencode.v47.annotation.gtf'
   genome_fasta <- 'data/references/GRCh38.p14.genome.fa'
+
+  data_dir <- '/scratch/asabe/projects/pacbio/data/revio'
   reads_bam <- list.files(data_dir, '*.flnc.sorted.bam$', recursive = TRUE, full.names = TRUE)
+
   prefix <- 'human.c2l2.revio.gencode_v47.GRCh38_p14'
+
 } else if (species == 'mouse') {
-  annotation_gtf <- 'data/references/annotation/gencode.vM34.annotation.gtf'
-  genome_fasta <- 'data/references/genome/GRCm39.genome.fa'
-  reads_bam <- list.files(str_glue("data/databank/{species}"), '*.sorted.bam$', recursive = TRUE, full.names = TRUE)
-  prefix <- 'mouse.gencode_vM34.GRCm39'
+
+  annotation_gtf <- 'data/references/gencode.vM36.annotation.gtf'
+  genome_fasta <- 'data/references/GRCm39.genome.fa'
+  
+  data_dir <- '/scratch/asabe/projects/pacbio/data/databank/mouse'
+  reads_bam <- list.files(data_dir, '*.flnc.sorted.bam$', recursive = TRUE, full.names = TRUE)
+  
+  prefix <- 'mouse.databank.gencode_vM36.GRCm39'
 }
 
 annotation_bambu <- prepareAnnotations(annotation_gtf)
