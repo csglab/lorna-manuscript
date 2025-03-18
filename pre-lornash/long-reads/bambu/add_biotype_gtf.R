@@ -5,6 +5,11 @@
 #   --ref_gtf_file data/references/gencode.v47.annotation.gtf \
 #   --output_gtf_file data/transcriptome/human.c2l2.revio.gencode_v47.GRCh38_p14/human.c2l2.revio.gencode_v47.GRCh38_p14.extended_annotations.sorted.biotyped.gtf
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/add_biotype_gtf.R \
+#   --input_gtf_file data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/neurondiff_isoseq.gencode_v47.GRCh38_p14.extended_annotations.sorted.gtf \
+#   --ref_gtf_file data/references/gencode.v47.annotation.gtf \
+#   --output_gtf_file data/transcriptome/neurondiff_isoseq.gencode_v47.GRCh38_p14/neurondiff_isoseq.gencode_v47.GRCh38_p14.extended_annotations.sorted.biotyped.gtf
+
 library(optparse)
 library(data.table)
 library(stringr)

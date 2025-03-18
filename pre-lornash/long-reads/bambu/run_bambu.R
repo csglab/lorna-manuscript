@@ -21,6 +21,16 @@
 #   --bam_pattern 'neurondiff_isoseq.*.flnc.sorted.bam$' \
 #   --prefix neurondiff_isoseq.gencode_v47.GRCh38_p14
 
+# Rscript lorna-manuscript/pre-lornash/long-reads/bambu/run_bambu.R \
+#   --species human \
+#   --mode quant \
+#   --do_postprocess FALSE \
+#   --num_threads 64 \
+#   --data_dir /scratch/asabe/projects/pacbio/data/databank/human/bam \
+#   --bam_pattern 'neurondiff_isoseq.*.flnc.sorted.bam$' \
+#   --prefix neurondiff_isoseq.gencode_v47.only \
+#   --ndr 0
+
 library(optparse)
 library(data.table)
 library(stringr)
@@ -75,6 +85,14 @@ option_list <- list(
     help = "Prefix for output files",
     metavar = "character"
   )
+  ,
+  make_option(
+    c("--ndr"),
+    type = "double", 
+    default = NULL,
+    help = "Novel discovery rate between 0 and 1. If not set, will be inferred by model",
+    metavar = "double"
+  )
 )
 
 opt_parser <- OptionParser(option_list = option_list)
@@ -87,6 +105,7 @@ num_threads <- opt$num_threads
 data_dir <- opt$data_dir
 bam_pattern <- opt$bam_pattern
 prefix <- opt$prefix
+ndr <- opt$ndr
 
 # setwd('/scratch/asabe/projects/lornash')
 setDTthreads(num_threads)
@@ -122,7 +141,8 @@ if (mode == 'quant') {
       min.readFractionByGene = 0.05,
       min.sampleNumber = 2
     ),
-    ncore = num_threads
+    ncore = num_threads,
+    NDR = ndr
   )
   
   output_prefix <- str_glue("{bambu_dir}/{prefix}")
